@@ -1,0 +1,45 @@
+name: Build PlayStation Controller APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract project ZIP
+        run: |
+          mkdir project
+          unzip -q *.zip -d project
+          find project -name settings.gradle.kts
+
+      - name: Build Android APK
+        run: |
+          PROJECT_DIR=$(dirname "$(find project -name settings.gradle.kts -print -quit)")
+          cd "$PROJECT_DIR"
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlayStation-Controller-APK
+          path: project/**/build/outputs/apk/debug/*.apk
